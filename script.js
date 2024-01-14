@@ -2,7 +2,7 @@ class Snake {
   constructor() {
     this.body = [{ x: 0, y: 0 }];
     this.direction = "right";
-    this.food = new Foog();
+    this.food = new Food();
   }
 
   move() {
