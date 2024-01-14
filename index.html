@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      .game-board {
+        display: grid;
+        grid-template-columns: repeat(20, 20px);
+        grid-template-rows: repeat(20, 20px);
+        gap: 1px;
+        border: 1px solid #000;
+      }
+
+      .cell {
+        width: 20px;
+        height: 20px;
+        background-color: #9eb8d9;
+      }
+
+      .snake {
+        background-color: #739072;
+      }
+
+      .food {
+        background-color: #5f0f40;
+      }
+    </style>
+    <title>Snake Game with Apple</title>
+  </head>
+  <body>
+    <div class="game-board" id="gameBoard"></div>
+    <script src="script.js"></script>
+  </body>
+</html>
