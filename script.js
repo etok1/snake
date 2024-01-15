@@ -90,6 +90,7 @@ class Game {
   constructor() {
     this.snake = new Snake(20, 20);
     this.food = new Food();
+    this.score = new Score();
     this.rows = 20;
     this.columns = 20;
   }
@@ -158,9 +159,9 @@ class Game {
     if (this.snake.eat(this.food)) {
       this.food.replace();
       console.log(this.snake.score.currentScore);
-      this.snake.score.currentScore += 1;
-      this.snake.score.updateDisplay();
-      this.snake.score.save();
+      this.score.currentScore += 1;
+      this.score.updateDisplay();
+      this.score.save();
     }
   }
 }
