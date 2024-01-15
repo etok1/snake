@@ -1,40 +1,73 @@
 class Snake {
-  constructor() {
+  constructor(rows, cols) {
     this.body = [{ x: 0, y: 0 }];
     this.direction = "right";
     this.food = new Food();
+    this.rows = rows;
+    this.cols = cols;
   }
 
   move() {
     const head = { ...this.body[0] };
     switch (this.direction) {
       case "up":
-        head.y -= 1;
+        head.y = (head.y - 1 + this.rows) % this.rows;
         break;
       case "down":
-        head.y += 1;
+        head.y = (head.y + 1) % this.rows;
         break;
       case "left":
-        head.x -= 1;
+        head.x = (head.x - 1 + this.cols) % this.cols;
         break;
       case "right":
-        head.x += 1;
+        head.x = (head.x + 1) % this.cols;
         break;
     }
 
     this.body.unshift(head);
-    this.body.pop();
-  }
-  eat(food) {
-    const head = this.body[0];
-    if (head.x === this.food.location.x && head.y === this.food.y) {
-      food.replace();
+
+    if (head.x === this.food.location.x && head.y === this.food.location.y) {
+      this.food.replace();
+    } else {
+      this.body.pop();
     }
   }
+
+  eat(food) {
+    const head = this.body[0];
+    if (head.x === food.location.x && head.y === food.location.y) {
+      this.body.push({ ...this.body[this.body.length - 1] });
+      return true;
+    }
+    return false;
+  }
+
   changeDirection(newDirection) {
     if (["up", "down", "left", "right"].includes(newDirection)) {
       this.direction = newDirection;
     }
+  }
+}
+
+class Score {
+  constructor() {
+    this.currentScore = 0;
+    this.highScore = 0;
+  }
+
+  save() {
+    if (this.currentScore > this.highScore) {
+      this.highScore = this.currentScore;
+      localStorage.setItem("highScore", this.highScore);
+    }
+  }
+
+  updateDisplay() {
+    const currentScoreElement = document.getElementById("current-score");
+    const highScoreElement = document.getElementById("high-score");
+
+    currentScoreElement.innerText = `Current Score:  + ${this.currentScore}`;
+    highScoreElement.innerText = `High Score: ${this.highScore}`;
   }
 }
 
@@ -55,7 +88,7 @@ class Food {
 
 class Game {
   constructor() {
-    this.snake = new Snake();
+    this.snake = new Snake(20, 20);
     this.food = new Food();
     this.rows = 20;
     this.columns = 20;
@@ -70,16 +103,42 @@ class Game {
         let cell = document.createElement("div");
         cell.classList.add("cell");
 
+        for (let i = 0; i < this.snake.body.length; i++) {
+          if (this.snake.body[i].x === col && this.snake.body[i].y === row) {
+            cell.classList.add("snake");
+          }
+        }
+
+        if (this.food.location.x === col && this.food.location.y === row) {
+          cell.classList.add("food");
+        }
+
         board.appendChild(cell);
       }
     }
   }
+
+  reset() {
+    console.log("Game reset!");
+    this.snake = new Snake(this.rows, this.columns);
+    this.food = new Food();
+
+    this.render();
+  }
+
   hitSelf() {
+    const head = this.snake.body[0];
+
     for (let i = 1; i < this.snake.body.length; i++) {
-      if (
-        this.snake.body[i].x === this.snake.body[0].x &&
-        this.snake.body[i].y === this.snake.body[0].y
-      ) {
+      if (head.y === this.snake.body[i].y && head.x === this.snake.body[i].x) {
+        console.log("Collision detected!");
+        console.log("Head coordinates:", head.x, head.y);
+        console.log(
+          "Colliding body coordinates:",
+          this.snake.body[i].x,
+          this.snake.body[i].y
+        );
+        this.reset();
         return true;
       }
     }
@@ -87,17 +146,27 @@ class Game {
   }
   update() {
     this.snake.move();
-  }
 
-  reset() {
-    this.snake = new Snake();
-    this.food = new Food();
+    if (this.hitSelf()) {
+      alert(`Game Over! Current Score: ${this.snake.score.currentScore}`);
+      console.log("Hit self detected!");
+      this.reset();
+      return;
+    }
     this.render();
+
+    if (this.snake.eat(this.food)) {
+      this.food.replace();
+      console.log(this.snake.score.currentScore);
+      this.snake.score.currentScore += 1;
+      this.snake.score.updateDisplay();
+      this.snake.score.save();
+    }
   }
 }
 
 let game = new Game();
-
+game.render();
 document.addEventListener("keydown", (event) => {
   switch (event.key) {
     case "ArrowUp":
@@ -114,6 +183,7 @@ document.addEventListener("keydown", (event) => {
       break;
   }
 });
+game.render();
 
 setInterval(() => {
   game.update();
