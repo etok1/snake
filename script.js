@@ -132,7 +132,7 @@ class Game {
     this.columns = 20;
     this.intervalId = null;
   }
-  render() {
+  draw() {
     const board = document.querySelector(".game-board");
 
     board.innerHTML = "";
@@ -169,7 +169,7 @@ class Game {
     this.snake = new Snake(this.rows, this.columns);
     this.food = new Food();
     this.score.reset();
-    this.render();
+    this.draw();
 
     const btn = document.querySelector("button");
     btn.style.display = "block";
@@ -214,7 +214,7 @@ class Game {
       return;
     }
 
-    this.render();
+    this.draw();
 
     if (this.snake.eat(this.food)) {
       this.food.replace();
@@ -228,7 +228,7 @@ class Game {
 
 // create variable called game and create new Object Game
 let game = new Game();
-game.render();
+game.draw();
 
 // added EventListener to change snake's direction
 document.addEventListener("keydown", (event) => {
@@ -247,7 +247,7 @@ document.addEventListener("keydown", (event) => {
       break;
   }
 });
-game.render();
+game.draw();
 
 game.intervalId = setInterval(() => {
   game.update();
