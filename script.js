@@ -1,26 +1,36 @@
+// class Snake. Functions
+
 class Snake {
   constructor(rows, cols) {
-    this.body = [{ x: 0, y: 0 }];
-    this.direction = "right";
     this.food = new Food();
     this.rows = rows;
     this.cols = cols;
+    this.initialize();
+  }
+
+  initialize() {
+    this.body = [
+      { x: 10, y: 10 },
+      { x: 9, y: 10 },
+    ];
+    this.direction = "right";
   }
 
   move() {
     const head = { ...this.body[0] };
+
     switch (this.direction) {
       case "up":
-        head.y = (head.y - 1 + this.rows) % this.rows;
+        head.y -= 1;
         break;
       case "down":
-        head.y = (head.y + 1) % this.rows;
+        head.y += 1;
         break;
       case "left":
-        head.x = (head.x - 1 + this.cols) % this.cols;
+        head.x -= 1;
         break;
       case "right":
-        head.x = (head.x + 1) % this.cols;
+        head.x += 1;
         break;
     }
 
@@ -31,6 +41,16 @@ class Snake {
     } else {
       this.body.pop();
     }
+  }
+
+  hitWall(rows, columns) {
+    const head = this.body[0];
+
+    if (head.x < 0 || head.x >= columns || head.y < 0 || head.y >= rows) {
+      return true;
+    }
+
+    return false;
   }
 
   eat(food) {
@@ -49,10 +69,12 @@ class Snake {
   }
 }
 
+// class Score to save highest score
+
 class Score {
   constructor() {
     this.currentScore = 0;
-    this.highScore = 0;
+    this.highScore = localStorage.getItem("highScore") || 0;
   }
 
   save() {
@@ -66,10 +88,15 @@ class Score {
     const currentScoreElement = document.getElementById("current-score");
     const highScoreElement = document.getElementById("high-score");
 
-    currentScoreElement.innerText = `Current Score:  + ${this.currentScore}`;
+    currentScoreElement.innerText = `Current Score: ${this.currentScore}`;
     highScoreElement.innerText = `High Score: ${this.highScore}`;
   }
+  reset() {
+    this.currentScore = 0;
+  }
 }
+
+// class Food to generate location for food
 
 class Food {
   constructor() {
@@ -84,7 +111,17 @@ class Food {
   replace() {
     this.location = this.generateLocation();
   }
+  isOnSnake(snake) {
+    for (const segment of snake.body) {
+      if (segment.x === this.location.x && segment.y === this.location.y) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
+
+// class Game to make game loop
 
 class Game {
   constructor() {
@@ -93,6 +130,7 @@ class Game {
     this.score = new Score();
     this.rows = 20;
     this.columns = 20;
+    this.intervalId = null;
   }
   render() {
     const board = document.querySelector(".game-board");
@@ -110,21 +148,42 @@ class Game {
           }
         }
 
-        if (this.food.location.x === col && this.food.location.y === row) {
+        if (
+          this.food.location.x === col &&
+          this.food.location.y === row &&
+          !this.food.isOnSnake(this.snake)
+        ) {
           cell.classList.add("food");
         }
 
         board.appendChild(cell);
       }
     }
+    this.score.updateDisplay();
   }
 
   reset() {
-    console.log("Game reset!");
+    const board = document.querySelector(".game-board");
+    board.innerHTML = "";
+
     this.snake = new Snake(this.rows, this.columns);
     this.food = new Food();
-
+    this.score.reset();
     this.render();
+
+    const btn = document.querySelector("button");
+    btn.style.display = "block";
+
+    btn.addEventListener("click", () => {
+      btn.style.display = "none";
+      console.log("Game reset!");
+
+      clearInterval(this.intervalId);
+
+      this.intervalId = setInterval(() => {
+        this.update();
+      }, 100);
+    });
   }
 
   hitSelf() {
@@ -132,14 +191,12 @@ class Game {
 
     for (let i = 1; i < this.snake.body.length; i++) {
       if (head.y === this.snake.body[i].y && head.x === this.snake.body[i].x) {
-        console.log("Collision detected!");
-        console.log("Head coordinates:", head.x, head.y);
-        console.log(
-          "Colliding body coordinates:",
-          this.snake.body[i].x,
-          this.snake.body[i].y
-        );
-        this.reset();
+        // console.log("Head coordinates:", head.x, head.y);
+        // console.log(
+        //   "body coordinates:",
+        //   this.snake.body[i].x,
+        //   this.snake.body[i].y
+        // );
         return true;
       }
     }
@@ -148,17 +205,20 @@ class Game {
   update() {
     this.snake.move();
 
-    if (this.hitSelf()) {
-      alert(`Game Over! Current Score: ${this.snake.score.currentScore}`);
-      console.log("Hit self detected!");
+    if (this.hitSelf() || this.snake.hitWall(this.rows, this.columns)) {
+      // console.log(this.score.currentScore);
+      alert(this.score.currentScore);
+      this.score.save();
+      clearInterval(this.intervalId);
       this.reset();
       return;
     }
+
     this.render();
 
     if (this.snake.eat(this.food)) {
       this.food.replace();
-      console.log(this.snake.score.currentScore);
+      console.log(this.score.currentScore);
       this.score.currentScore += 1;
       this.score.updateDisplay();
       this.score.save();
@@ -166,8 +226,11 @@ class Game {
   }
 }
 
+// create variable called game and create new Object Game
 let game = new Game();
 game.render();
+
+// added EventListener to change snake's direction
 document.addEventListener("keydown", (event) => {
   switch (event.key) {
     case "ArrowUp":
@@ -186,6 +249,6 @@ document.addEventListener("keydown", (event) => {
 });
 game.render();
 
-setInterval(() => {
+game.intervalId = setInterval(() => {
   game.update();
 }, 100);
